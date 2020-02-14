@@ -1,0 +1,83 @@
+---
+title: "Transmission effect on car MPG performance"
+author: "Henrique Souza"
+date: "14/02/2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Executive Summary
+
+Motor Trend Magazine is interested in exploring the relationship between a set of variables and miles per gallon (MPG). They are particularly interested in the following two questions:
+
+1. Is an automatic or manual transmission better for MPG.
+1. Quantify the MPG difference between automatic and manual transmissions.
+
+In this document we compare different models and show that *for an average car, manual transmission outperforms automatic in <strong>11%</strong> MPG efficience*.
+
+## Exploratory Data Analysis
+
+You can see a comparison between Automatic and Manual cars accross diferent dimensions
+using a small Shiny Application available on the following url:
+
+https://htssouza.shinyapps.io/DevelopingDataProducts-Project/
+
+The source of this application and of this presentation itself can be found on:
+
+https://github.com/htssouza/DevelopingDataProducts-Project/
+
+## Models
+
+The following 5 linear models were compared:
+
+1. Using only the Transmission.
+1. Transmission and Weight.
+1. Transmission, Weight and HP.
+1. Transmission, Weight, HP and Displacement.
+1. Transmission, Weight, HP, Displacement and Gears.
+
+```{r echo = FALSE, message = FALSE}
+library(datasets)
+library(dplyr)
+library(ggplot2)
+library(stats)
+data(mtcars)
+am.levels <- c("auto", "manual")
+am.auto <- as.factor(c(1, 2))
+am.manual <- as.factor(c(1, 2))
+levels(am.auto) <- am.levels
+levels(am.manual) <- am.levels
+am.auto <- am.auto[1]
+am.manual <- am.manual[2]
+mtcars <- mtcars %>%
+  mutate(am = am + 1) %>%
+  mutate(am = factor(am))
+levels(mtcars$am) <- am.levels
+
+mod1 <- lm(mpg ~ am, data = mtcars)
+mod2 <- lm(mpg ~ am + wt, data = mtcars)
+mod3 <- lm(mpg ~ am + wt + hp, data = mtcars)
+mod4 <- lm(mpg ~ am + wt + hp + disp, data = mtcars)
+mod5 <- lm(mpg ~ am + wt + hp + disp + gear, data = mtcars)
+# anova(mod1, mod2, mod3, mod4, mod5)
+```
+
+The p-values for Model 4 is already too big (>= 0.05).
+We will stick with Model 3 (Transmission, Weight and HP).
+
+## Conclusion
+
+Using our model to compare the performance of average cars with both transmission
+types we have that a *Manual* one has a better MPG performance of:
+
+```{r echo = TRUE}
+wt.mean <- mean(mtcars$wt)
+hp.mean <- mean(mtcars$hp)
+auto.mpg <- predict(mod3, data.frame(am = am.auto, wt = wt.mean, hp = hp.mean))
+manual.mpg <- predict(mod3, data.frame(am = am.manual, wt = wt.mean, hp = hp.mean))
+cat(paste(round(as.numeric(((manual.mpg - auto.mpg) / (auto.mpg)) * 100)), "%"))
+```
+
